@@ -1,14 +1,3 @@
-<img width="421" height="277" alt="image" src="https://github.com/user-attachments/assets/2b18ee4f-3220-45d8-bc8a-a3502a12782a" /># 👁️ Eye Teeth Face Detection using OpenCV
-
-This project performs real-time detection of:
-
-- 👤 Face Detection  
-- 👀 Eye Detection  
-- 😄 Smile / Teeth Detection  
-
-using Haar Cascade classifiers in OpenCV.
-
----
 
 ## 🚀 Technologies Used
 
