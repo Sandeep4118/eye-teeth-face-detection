@@ -1,5 +1,64 @@
-import cv2
+# import cv2
 
+# face_cascade = cv2.CascadeClassifier(
+#     cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+# )
+
+# eye_cascade = cv2.CascadeClassifier(
+#     cv2.data.haarcascades + "haarcascade_eye.xml"
+# )
+
+# smile_cascade = cv2.CascadeClassifier(
+#     cv2.data.haarcascades + "haarcascade_smile.xml"
+# )
+
+# cap = cv2.VideoCapture(0)
+
+# while True:
+#     ret, frame = cap.read()
+#     if not ret:
+#         break
+
+#     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+#     faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+
+#     for (x, y, w, h) in faces:
+#         # Face rectangle
+#         cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
+#         cv2.putText(frame, "Face", (x, y-10),
+#                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
+
+#         roi_gray = gray[y:y+h, x:x+w]
+#         roi_color = frame[y:y+h, x:x+w]
+
+#         # Eye detection
+#         eyes = eye_cascade.detectMultiScale(roi_gray, 1.1, 10)
+#         for (ex, ey, ew, eh) in eyes:
+#             cv2.rectangle(roi_color, (ex, ey), (ex+ew, ey+eh), (0, 255, 0), 2)
+#             cv2.putText(roi_color, "Eye", (ex, ey-5),
+#                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+#         # Smile detection
+#         smiles = smile_cascade.detectMultiScale(roi_gray, 1.7, 20)
+#         for (sx, sy, sw, sh) in smiles:
+#             cv2.rectangle(roi_color, (sx, sy), (sx+sw, sy+sh), (0, 0, 255), 2)
+#             cv2.putText(roi_color, "Smile", (sx, sy-5),
+#                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+
+#     cv2.imshow("Face Eye Smile Detection", frame)
+
+#     if cv2.waitKey(1) & 0xFF == ord('q'):
+#         break
+
+# cv2.destroyAllWindows()
+
+import cv2
+import mediapipe as mp
+
+# -----------------------------
+# Haar Cascade (Face/Eye/Smile)
+# -----------------------------
 face_cascade = cv2.CascadeClassifier(
     cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
 )
@@ -12,6 +71,16 @@ smile_cascade = cv2.CascadeClassifier(
     cv2.data.haarcascades + "haarcascade_smile.xml"
 )
 
+# -----------------------------
+# MediaPipe Hands
+# -----------------------------
+mp_hands = mp.solutions.hands
+hands = mp_hands.Hands(max_num_hands=2)
+mp_draw = mp.solutions.drawing_utils
+
+# -----------------------------
+# Camera Start
+# -----------------------------
 cap = cv2.VideoCapture(0)
 
 while True:
@@ -19,12 +88,13 @@ while True:
     if not ret:
         break
 
+    # -----------------------------
+    # Face Detection (Haar)
+    # -----------------------------
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
     faces = face_cascade.detectMultiScale(gray, 1.3, 5)
 
     for (x, y, w, h) in faces:
-        # Face rectangle
         cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
         cv2.putText(frame, "Face", (x, y-10),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
@@ -36,19 +106,30 @@ while True:
         eyes = eye_cascade.detectMultiScale(roi_gray, 1.1, 10)
         for (ex, ey, ew, eh) in eyes:
             cv2.rectangle(roi_color, (ex, ey), (ex+ew, ey+eh), (0, 255, 0), 2)
-            cv2.putText(roi_color, "Eye", (ex, ey-5),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
         # Smile detection
         smiles = smile_cascade.detectMultiScale(roi_gray, 1.7, 20)
         for (sx, sy, sw, sh) in smiles:
             cv2.rectangle(roi_color, (sx, sy), (sx+sw, sy+sh), (0, 0, 255), 2)
-            cv2.putText(roi_color, "Smile", (sx, sy-5),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
-    cv2.imshow("Face Eye Smile Detection", frame)
+    # -----------------------------
+    # Hand Detection (MediaPipe)
+    # -----------------------------
+    rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    result = hands.process(rgb)
+
+    if result.multi_hand_landmarks:
+        for handLms in result.multi_hand_landmarks:
+            mp_draw.draw_landmarks(
+                frame,
+                handLms,
+                mp_hands.HAND_CONNECTIONS
+            )
+
+    cv2.imshow("Face + Eye + Smile + Hand Detection", frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
+cap.release()
 cv2.destroyAllWindows()
